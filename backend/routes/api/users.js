@@ -31,6 +31,11 @@ const validateSignup = [
   handleValidationErrors,
 ];
 
+router.get("/", async (req, res) => {
+  const users = await User.findAll();
+  return res.json(users);
+});
+
 router.post("/", validateSignup, async (req, res) => {
   const { firstName, lastName, email, password, username } = req.body;
   const hashedPassword = bcrypt.hashSync(password);
