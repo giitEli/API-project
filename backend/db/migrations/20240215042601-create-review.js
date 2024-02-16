@@ -22,6 +22,7 @@ module.exports = {
             model: "Users",
             key: "id",
           },
+          onDelete: "cascade",
         },
         spotId: {
           type: Sequelize.INTEGER,
@@ -29,6 +30,7 @@ module.exports = {
             model: "Spots",
             key: "id",
           },
+          onDelete: "cascade",
         },
         review: {
           type: Sequelize.STRING,

@@ -1,6 +1,4 @@
-"use strict";
-
-const { Booking } = require("../models");
+const { Spot_Image } = require("../models");
 
 let options = {};
 if (process.env.NODE_ENV === "production") {
@@ -9,14 +7,17 @@ if (process.env.NODE_ENV === "production") {
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await Booking.bulkCreate(
+    await Spot_Image.bulkCreate(
       [
         {
-          id: 1,
           spotId: 1,
-          userId: 2,
-          startDate: "2021-11-19",
-          endDate: "2021-11-20",
+          url: "image url",
+          preview: true,
+        },
+        {
+          spotId: 1,
+          url: "image url",
+          preview: false,
         },
       ],
       { validate: true }
@@ -24,7 +25,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "Bookings";
+    options.tableName = "Spot_Images";
     const Op = Sequelize.Op;
     return queryInterface.bulkDelete(options);
   },
