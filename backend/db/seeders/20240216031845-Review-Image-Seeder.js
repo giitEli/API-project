@@ -1,4 +1,4 @@
-const { Review_Image } = require("../models");
+const { ReviewImage } = require("../models");
 
 let options = {};
 if (process.env.NODE_ENV === "production") {
@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === "production") {
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await Review_Image.bulkCreate(
+    await ReviewImage.bulkCreate(
       [
         {
           reviewId: 1,
@@ -19,7 +19,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "Review_Images";
+    options.tableName = "ReviewImages";
     const Op = Sequelize.Op;
     return queryInterface.bulkDelete(options);
   },

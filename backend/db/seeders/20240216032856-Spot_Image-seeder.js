@@ -1,4 +1,4 @@
-const { Spot_Image } = require("../models");
+const { SpotImage } = require("../models");
 
 let options = {};
 if (process.env.NODE_ENV === "production") {
@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === "production") {
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await Spot_Image.bulkCreate(
+    await SpotImage.bulkCreate(
       [
         {
           spotId: 1,
@@ -25,7 +25,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "Spot_Images";
+    options.tableName = "SpotImages";
     const Op = Sequelize.Op;
     return queryInterface.bulkDelete(options);
   },

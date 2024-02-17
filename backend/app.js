@@ -43,8 +43,6 @@ app.use(
 // backend/app.js
 const routes = require("./routes");
 
-// ...
-
 app.use(routes); // Connect all the routes
 
 // Catch unhandled requests and forward to error handler.
