@@ -12,13 +12,25 @@ module.exports = {
     await Booking.bulkCreate(
       [
         {
-          id: 1,
           spotId: 1,
-          userId: 2,
-          startDate: "2021-11-19",
-          endDate: "2021-11-20",
+          userId: 3,
+          startDate: "2030-1-1",
+          endDate: "2031-1-1",
+        },
+        {
+          spotId: 1,
+          userId: 3,
+          startDate: "2010-1-1",
+          endDate: "2011-1-1",
+        },
+        {
+          spotId: 2,
+          userId: 3,
+          startDate: "2030-1-1",
+          endDate: "2031-1-1",
         },
       ],
+
       { validate: true }
     );
   },

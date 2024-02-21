@@ -13,6 +13,22 @@ module.exports = {
           reviewId: 1,
           url: "image url",
         },
+        {
+          reviewId: 1,
+          url: "image url",
+        },
+        {
+          reviewId: 1,
+          url: "image url",
+        },
+        {
+          reviewId: 2,
+          url: "image url",
+        },
+        {
+          reviewId: 2,
+          url: "image url",
+        },
       ],
       { validate: true }
     );

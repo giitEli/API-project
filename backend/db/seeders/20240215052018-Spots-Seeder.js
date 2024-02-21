@@ -24,18 +24,6 @@ module.exports = {
           price: 123,
         },
         {
-          ownerId: 1,
-          address: "123 All Eyes On Me",
-          city: "City of Sin",
-          state: "ShingtonWa",
-          country: "United States of America",
-          lat: 36.7645358,
-          lng: -222.4730327,
-          name: "Good Spot",
-          description: "fake place in my mind",
-          price: 999,
-        },
-        {
           ownerId: 2,
           address: "123 fake address",
           city: "Fake City",
