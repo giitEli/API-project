@@ -18,6 +18,17 @@ const {
 } = require("../../db/models");
 const { INTEGER, Op } = require("sequelize");
 
+const updateSpotAvgRating = async (spot, reviews, newReviewStars) => {
+  const avgRating = parseInt(
+    (reviews.reduce((acc, review) => (acc += Number(review.stars)), 0) +
+      Number(newReviewStars)) /
+      (reviews.length + 1)
+  );
+  await spot.update({
+    avgRating,
+  });
+};
+
 const router = express.Router();
 
 const validateQuery = [
@@ -128,7 +139,7 @@ router.get("/:spotId", async (req, res, next) => {
     include: [SpotImage, User],
   });
   if (!spot) {
-    return res.json({
+    return res.status(404).json({
       message: "Spot couldn't be found",
     });
   }
@@ -136,47 +147,25 @@ router.get("/:spotId", async (req, res, next) => {
   spot.Owner = spot.User;
   delete spot.User;
   delete spot.Owner.username;
-  return res.json(spot);
+  return res.status(200).json(spot);
 });
 
 const validateSpot = [
-  check("address")
-    .exists({ checkFalsy: true })
-    .notEmpty()
-    .withMessage("Street address is required"),
-  check("city")
-    .exists({ checkFalsy: true })
-    .notEmpty()
-    .withMessage("City is required"),
-  check("state")
-    .exists({ checkFalsy: true })
-    .notEmpty()
-    .withMessage("State is required"),
-  check("country")
-    .exists({ checkFalsy: true })
-    .notEmpty()
-    .withMessage("Country is required"),
+  check("address").notEmpty().withMessage("Street address is required"),
+  check("city").notEmpty().withMessage("City is required"),
+  check("state").notEmpty().withMessage("State is required"),
+  check("country").notEmpty().withMessage("Country is required"),
   check("lat")
-    .exists({ checkFalsy: true })
-    .notEmpty()
     .isFloat({ min: -90, max: 90 })
     .withMessage("Latitude must be within -90 and 90"),
   check("lng")
-    .exists({ checkFalsy: true })
-    .notEmpty()
     .isFloat({ min: -180, max: 180 })
     .withMessage("Longitude must be within -180 and 180"),
   check("name")
-    .exists({ checkFalsy: true })
-    .notEmpty()
     .isLength({ max: 50 })
     .withMessage("Name must be less than 50 characters"),
-  check("description")
-    .exists({ checkFalsy: true })
-    .notEmpty()
-    .withMessage("Description is required"),
+  check("description").notEmpty().withMessage("Description is required"),
   check("price")
-    .notEmpty()
     .isInt({ min: 0 })
     .withMessage("Price per day must be a positive number"),
   handleValidationErrors,
@@ -200,84 +189,75 @@ router.post("/", requireAuth, validateSpot, async (req, res) => {
   return res.json(newSpot);
 });
 
-router.put("/:spotId", requireAuth, validateSpot, async (req, res, next) => {
-  const spot = await Spot.findByPk(req.params.spotId);
+router.put(
+  "/:spotId",
+  requireAuth,
+  doesExist(Spot, "spotId", "Spot"),
+  checkAuth("ownerId", true),
+  validateSpot,
+  async (req, res, next) => {
+    const spot = req.recordData;
 
-  if (!spot) {
+    const {
+      address,
+      city,
+      state,
+      country,
+      lat,
+      lng,
+      name,
+      description,
+      price,
+    } = req.body;
+
+    await spot.update({
+      address,
+      city,
+      state,
+      country,
+      lat,
+      lng,
+      name,
+      description,
+      price,
+    });
+
+    return res.status(200).json(spot);
+  }
+);
+
+router.delete(
+  "/:spotId",
+  requireAuth,
+  doesExist(Spot, "spotId", "Spot"),
+  async (req, res, next) => {
+    const spot = req.recordData;
+
+    await spot.destroy();
     return res.json({
-      message: "Spot couldn't be found",
+      message: "Successfully deleted",
     });
   }
+);
 
-  if (spot.ownerId !== req.user.id) {
-    const err = new Error("Authentication required");
-    err.title = "Authentication required";
-    err.errors = { message: "Authentication required" };
-    err.status = 401;
-    return next(err);
-  }
-  const { address, city, state, country, lat, lng, name, description, price } =
-    req.body;
-  await spot.update({
-    address,
-    city,
-    state,
-    country,
-    lat,
-    lng,
-    name,
-    description,
-    price,
-  });
-  return res.json(spot);
-});
+router.post(
+  "/:spotId/images",
+  requireAuth,
+  doesExist(Spot, "spotId", "Spot"),
+  checkAuth("ownerId"),
+  async (req, res, next) => {
+    const spot = req.recordData;
 
-router.delete("/:spotId", requireAuth, async (req, res, next) => {
-  const spot = await Spot.findByPk(req.params.spotId);
+    const { url, preview } = req.body;
 
-  if (!spot) {
-    return res.json({
-      message: "Spot couldn't be found",
+    const spotImage = await spot.createSpotImage({
+      spotId: req.params.spotId,
+      url,
+      preview,
     });
+    res.json(spotImage);
   }
-
-  if (spot.ownerId !== req.user.id) {
-    const err = new Error("Authentication required");
-    err.title = "Authentication required";
-    err.errors = { message: "Authentication required" };
-    err.status = 401;
-    return next(err);
-  }
-  await spot.destroy();
-  return res.json({
-    message: "Successfully deleted",
-  });
-});
-
-router.post("/:spotId/images", requireAuth, async (req, res, next) => {
-  const spot = await Spot.findByPk(req.params.spotId);
-
-  if (!spot) {
-    return res.json({
-      message: "Spot couldn't be found",
-    });
-  } else if (spot.ownerId !== req.user.id) {
-    const err = new Error("Authentication required");
-    err.title = "Authentication required";
-    err.errors = { message: "Authentication required" };
-    err.status = 401;
-    return next(err);
-  }
-
-  const { url, preview } = req.body;
-
-  const spotImage = await spot.createSpotImage({
-    spotId: req.params.spotId,
-    url,
-    preview,
-  });
-  res.json(spotImage);
-});
+);
 
 router.get("/:spotId/reviews", async (req, res) => {
   const reviews = await Review.findAll({
@@ -288,21 +268,16 @@ router.get("/:spotId/reviews", async (req, res) => {
   });
 
   if (!reviews.length) {
-    return res.json({
+    return res.status(404).json({
       message: "Spot couldn't be found",
     });
   }
-  res.json(reviews);
+  res.status(200).json(reviews);
 });
 
 const validateReview = [
-  check("review")
-    .exists({ checkFalsy: true })
-    .notEmpty()
-    .withMessage("Review test is required"),
+  check("review").notEmpty().withMessage("Review test is required"),
   check("stars")
-    .exists({ checkFalsy: true })
-    .notEmpty()
     .isInt({ min: 1, max: 5 })
     .withMessage("Stars must be an integer from 1 to 5"),
   handleValidationErrors,
@@ -311,27 +286,22 @@ const validateReview = [
 router.post(
   "/:spotId/reviews",
   requireAuth,
+  doesExist(Spot, "spotId", "Spot"),
   validateReview,
   async (req, res, next) => {
-    const spot = await Spot.findByPk(req.params.spotId);
+    const spot = req.recordData;
 
-    if (!spot) {
-      return res.json({
-        message: "Spot couldn't be found",
-      });
+    const reviews = await spot.getReviews();
+
+    for (let review of reviews) {
+      if (review.userId === req.user.id) {
+        return res.json({
+          message: "User already has a review for this spot",
+        });
+      }
     }
 
-    const doesUserAlreadyHaveReviewForSpot = await Review.findOne({
-      where: {
-        userId: req.user.id,
-      },
-    });
-
-    if (doesUserAlreadyHaveReviewForSpot) {
-      return res.json({
-        message: "User already has a review for this spot",
-      });
-    }
+    updateSpotAvgRating(spot, reviews, req.body.stars);
 
     const { review, stars } = req.body;
 
@@ -340,12 +310,9 @@ router.post(
       review,
       stars,
     });
-    return res.json(newReview);
+    return res.status(201).json(newReview);
   }
 );
-
-// router.get("/:spotId/bookings", requireAuth, async (req, res) => {
-//   const spot = await Spot.findByPk(req.params.spotId);
 
 router.get(
   "/:spotId/bookings",
@@ -353,18 +320,6 @@ router.get(
   doesExist(Spot, "spotId", "Spot"),
   checkAuth("ownerId"),
   async (req, res) => {
-    // if (!spot) {
-    //   return res.json({
-    //     message: "Spot couldn't be found",
-    //   });
-    // } else if (spot.ownerId !== req.user.id) {
-    //   const err = new Error("Authentication required");
-    //   err.title = "Authentication required";
-    //   err.errors = { message: "Authentication required" };
-    //   err.status = 401;
-    //   return next(err);
-    // }
-
     const spot = req.recordData;
 
     const bookings = await spot.getBookings({
@@ -389,28 +344,8 @@ const validateDate = [
   handleValidationErrors,
 ];
 
-const spotExist = async (req, res, next) => {
-  req.spot = await Spot.findByPk(req.params.spotId);
-  if (!req.spot) {
-    return res.json({
-      message: "Spot couldn't be found",
-    });
-  }
-  next();
-};
-
-const userNotOwner = async (req, res, next) => {
-  if (req.spot.ownerId === req.user.id) {
-    return res.json({
-      message: "User cannot be spot Owner",
-    });
-  }
-  next();
-};
-
 const noConflicts = async (req, res, next) => {
-  console.log("here");
-  const spot = req.spot;
+  const spot = req.recordData;
   const error = {
     message: "Sorry, this spot is already booked for the specified dates",
   };
@@ -442,19 +377,19 @@ const noConflicts = async (req, res, next) => {
 router.post(
   "/:spotId/bookings",
   requireAuth,
-  spotExist,
-  userNotOwner,
+  doesExist(Spot, "spotId", "Spot"),
+  checkAuth("ownerId", true),
   validateDate,
   noConflicts,
   async (req, res) => {
     const { startDate, endDate } = req.body;
-    const newBooking = await Booking.create({
-      spotId: req.params.spotId,
+    const spot = req.recordData;
+    const newBooking = await spot.createBooking({
       userId: req.user.id,
       startDate,
       endDate,
     });
-    return res.json(newBooking);
+    return res.status(201).json(newBooking);
   }
 );
 

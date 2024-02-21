@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const { check } = require("express-validator");
 const { handleValidationErrors } = require("../../utils/validation");
 const { setTokenCookie, requireAuth } = require("../../utils/auth");
+const { checkAuth, doesExist } = require("../../utils/middleHelpers");
 const {
   Spot,
   User,
@@ -13,21 +14,11 @@ const {
 
 const router = express.Router();
 
-const imageExist = async (req, res, next) => {
-  req.spotImage = await SpotImage.findByPk(req.params.imageId);
-  if (!req.spotImage) {
-    return res.json({
-      message: "Spot Image couldn't be found",
-    });
-  }
-  next();
-};
-
 const userIsOwner = async (req, res, next) => {
-  const spot = await req.spotImage.getSpot();
+  const spot = await req.recordData.getSpot();
   if (spot.ownerId !== req.user.id) {
-    return res.json({
-      message: "Your are not the owner of this spot",
+    return res.status(403).json({
+      message: "Forbidden",
     });
   }
   next();
@@ -36,10 +27,10 @@ const userIsOwner = async (req, res, next) => {
 router.delete(
   "/:imageId",
   requireAuth,
-  imageExist,
+  doesExist(SpotImage, "imageId", "Spot Image"),
   userIsOwner,
   async (req, res) => {
-    await req.spotImage.destroy();
+    await req.recordData.destroy();
     return res.json({
       message: "Successfully deleted",
     });

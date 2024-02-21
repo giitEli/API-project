@@ -8,27 +8,27 @@ const checkAuth = (key, notMatch) => {
     const forbiddenMessage = {
       message: "Forbidden",
     };
-    console.log("here");
 
-    if (notMatch && req.user.id !== req.recordData[key]) {
+    if (notMatch && req.user.id === req.recordData[key]) {
       return res.status(403).json(forbiddenMessage);
-    } else if (req.user.id !== req.recordData[key]) {
+    } else if (!notMatch && req.user.id !== req.recordData[key]) {
       return res.status(403).json(forbiddenMessage);
     }
-    console.log("here");
+
     next();
   };
 };
 
-const doesExist = (model, key, modelString) => {
+const doesExist = (model, reqParam, modelString) => {
   return async (req, res, next) => {
-    req.recordData = await model.findByPk(req.params[key]);
+    req.recordData = await model.findByPk(req.params[reqParam]);
 
     if (!req.recordData) {
       return res.status(404).json({
-        message: `${modelString} not found`,
+        message: `${modelString} couldn't be found`,
       });
     }
+
     return next();
   };
 };
