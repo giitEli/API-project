@@ -1,5 +1,5 @@
 const express = require("express");
-const bcrypt = require("bcryptjs");
+const { checkAuth, doesExist } = require("../../utils/middleHelpers");
 const { check, oneOf, query } = require("express-validator");
 const {
   handleValidationErrors,
@@ -344,26 +344,35 @@ router.post(
   }
 );
 
-router.get("/:spotId/bookings", requireAuth, async (req, res) => {
-  const spot = await Spot.findByPk(req.params.spotId);
+// router.get("/:spotId/bookings", requireAuth, async (req, res) => {
+//   const spot = await Spot.findByPk(req.params.spotId);
 
-  if (!spot) {
-    return res.json({
-      message: "Spot couldn't be found",
+router.get(
+  "/:spotId/bookings",
+  requireAuth,
+  doesExist(Spot, "spotId", "Spot"),
+  checkAuth("ownerId"),
+  async (req, res) => {
+    // if (!spot) {
+    //   return res.json({
+    //     message: "Spot couldn't be found",
+    //   });
+    // } else if (spot.ownerId !== req.user.id) {
+    //   const err = new Error("Authentication required");
+    //   err.title = "Authentication required";
+    //   err.errors = { message: "Authentication required" };
+    //   err.status = 401;
+    //   return next(err);
+    // }
+
+    const spot = req.recordData;
+
+    const bookings = await spot.getBookings({
+      include: User,
     });
-  } else if (spot.ownerId !== req.user.id) {
-    const err = new Error("Authentication required");
-    err.title = "Authentication required";
-    err.errors = { message: "Authentication required" };
-    err.status = 401;
-    return next(err);
+    return res.json(bookings);
   }
-
-  const bookings = await spot.getBookings({
-    include: User,
-  });
-  return res.json(bookings);
-});
+);
 
 const validateDate = [
   check("startDate")
