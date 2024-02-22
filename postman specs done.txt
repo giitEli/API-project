@@ -1,0 +1,25 @@
+POST ERROR - Sign Up - Duplicate Email need to reformat error body
+
+POST ERROR - Sign Up - Duplicate Email ^
+
+POST ERROR - Sign Up - Body Validation ^
+
+POST ERROR - Log In - Invalid Credentials ^
+
+POST ERROR - Log In - Body Validation ^
+
+POST Create an Image for a Spot - wrong formatting
+
+POST ERROR - Create a Spot - Body Validation ^
+
+GET Get All Spots - Verify Creation, Prevention, Image Update - missing numReview, spot images, and owner data
+
+GET Get Spots of Current User - Verify Creation, Prevention, Image Update - missing preview and array should be named spots inside another obj
+
+GET Get Details of a Spot by Id - Verify Creation, Image Update - missing numReview
+
+PUT Edit a Spot - don't need avgRating or numReview
+
+ERROR - Edit a Spot - Body Validation ^
+
+

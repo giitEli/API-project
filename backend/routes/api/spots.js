@@ -186,14 +186,14 @@ router.post("/", requireAuth, validateSpot, async (req, res) => {
     description,
     price,
   });
-  return res.json(newSpot);
+  return res.status(201).json(newSpot);
 });
 
 router.put(
   "/:spotId",
   requireAuth,
   doesExist(Spot, "spotId", "Spot"),
-  checkAuth("ownerId", true),
+  checkAuth("ownerId"),
   validateSpot,
   async (req, res, next) => {
     const spot = req.recordData;
@@ -230,6 +230,7 @@ router.delete(
   "/:spotId",
   requireAuth,
   doesExist(Spot, "spotId", "Spot"),
+  checkAuth("ownerId"),
   async (req, res, next) => {
     const spot = req.recordData;
 
