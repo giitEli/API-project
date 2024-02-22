@@ -122,7 +122,7 @@ router.get("/", validateQuery, async (req, res) => {
   return res.json(await Spot.findAll());
 });
 
-router.get("/current", async (req, res) => {
+router.get("/current", requireAuth, async (req, res) => {
   const spots = await Spot.findAll({
     where: {
       ownerId: req.user.id,

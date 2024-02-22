@@ -89,7 +89,7 @@ router.put(
   }
 );
 
-router.put("/:reviewId", requireAuth, async (req, res, next) => {
+router.delete("/:reviewId", requireAuth, async (req, res, next) => {
   const review = await Review.findByPk(req.params.reviewId);
   if (!review) {
     return res.json({ message: "Review couldn't be found" });
