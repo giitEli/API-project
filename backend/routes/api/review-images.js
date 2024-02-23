@@ -1,14 +1,32 @@
 const express = require("express");
-const bcrypt = require("bcryptjs");
-const { check } = require("express-validator");
-const { handleValidationErrors } = require("../../utils/validation");
-const { setTokenCookie, requireAuth } = require("../../utils/auth");
+const {
+  checkAuth,
+  doesExist,
+  handleValidationErrors,
+  noConflicts,
+} = require("../../utils/middleWear.js");
+const {
+  validateSignupBody,
+  signupCustomValidator,
+  validateQuery,
+  validateSpot,
+  validateDate,
+  validateLogin,
+  validateReview,
+} = require("../../utils/validators");
+const {
+  dateToString,
+  dateIsBeforeDate,
+  dateIsAfterDate,
+} = require("../../utils/helperFunctions")
+const { requireAuth } = require("../../utils/auth");
 const {
   Spot,
   User,
   SpotImage,
   Review,
   ReviewImage,
+  Booking,
 } = require("../../db/models");
 
 const router = express.Router();

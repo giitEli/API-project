@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       User.hasMany(models.Spot, {
         foreignKey: "ownerId",
+        as: "Owner"
       });
     }
   }
@@ -60,7 +61,7 @@ module.exports = (sequelize, DataTypes) => {
       modelName: "User",
       defaultScope: {
         attributes: {
-          exclude: ["hashedPassword", "email", "createdAt", "updatedAt"],
+          exclude: ["hashedPassword", "createdAt", "updatedAt"],
         },
       },
     }

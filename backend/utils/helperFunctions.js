@@ -1,28 +1,3 @@
-// backend/utils/validation.js
-const { validationResult } = require("express-validator");
-
-// middleware for formatting errors from express-validator middleware
-// (to customize, see express-validator's documentation)
-const handleValidationErrors = (req, _res, next) => {
-  const validationErrors = validationResult(req);
-
-  console.log(validationErrors)
-
-  if (!validationErrors.isEmpty()) {
-    const errors = {};
-    validationErrors
-      .array()
-      .forEach((error) => (errors[error.path] = error.msg));
-
-    const err = Error("Bad request.");
-    err.errors = errors;
-    err.status = 400;
-    err.title = "Bad request.";
-    next(err);
-  }
-  next();
-};
-
 const dateIsBeforeDate = (date1, date2) => {
   const date1Arr = date1.split("-");
   const date2Arr = date2.split("-");
@@ -47,9 +22,40 @@ const dateToString = (date) => {
   return [date.getFullYear(), date.getMonth() + 1, date.getDate()].join("-");
 };
 
+const getAvgRating = (spot, reviews) => {
+  if (!reviews.length) return null;
+  let sum = 0;
+  let totalReviews = 0;
+  for (const review of reviews) {
+    if (review.spotId === spot.id) {
+      sum += review.stars;
+      totalReviews++;
+    }
+  }
+  const average = sum / totalReviews;
+  return Math.round(average * 10) / 10;
+};
+
+const getReviewCount = (spot, reviews) => {
+  let reviewCount = 0;
+  for (const review of reviews) {
+    if (review.spotId === spot.id) reviewCount++;
+  }
+  return reviewCount;
+};
+
+const getPreviewImage = (spot, spotImages) => {
+  for (const image of spotImages) {
+    if (image.spotId === spot.id && image.preview) return image.url;
+  }
+  return null;
+};
+
 module.exports = {
   dateToString,
-  handleValidationErrors,
   dateIsBeforeDate,
   dateIsAfterDate,
+  getAvgRating,
+  getReviewCount,
+  getPreviewImage,
 };

@@ -1,23 +1,12 @@
 const express = require("express");
 const { Op } = require("sequelize");
 const bcrypt = require("bcryptjs");
-const { setTokenCookie, restoreUser } = require("../../utils/auth");
+const { setTokenCookie } = require("../../utils/auth");
 const { User } = require("../../db/models");
-const { check } = require("express-validator");
-const { handleValidationErrors } = require("../../utils/validation");
+const { validateLogin } = require("../../utils/validators.js");
 const router = express.Router();
 
 // Log in
-const validateLogin = [
-  check("credential")
-    .notEmpty()
-    .withMessage("Email or username is required"),
-  check("password")
-    .exists({ checkFalsy: true })
-    .withMessage("Password is required"),
-  handleValidationErrors,
-];
-
 router.post("/", validateLogin, async (req, res, next) => {
   const { credential, password } = req.body;
 
@@ -31,11 +20,14 @@ router.post("/", validateLogin, async (req, res, next) => {
   });
 
   if (!user || !bcrypt.compareSync(password, user.hashedPassword.toString())) {
-    const err = new Error("Login failed");
-    err.status = 401;
-    err.title = "Login failed";
-    err.errors = { credential: "Invalid credentials" };
-    return next(err);
+    // const err = new Error("Login failed");
+    // err.status = 401;
+    // err.title = "Login failed";
+    // err.errors = { credential: "Invalid credentials" };
+    // return next(err);
+    return res.status(401).json({
+      message: "Invalid credentials",
+    });
   }
 
   const safeUser = {

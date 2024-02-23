@@ -1,13 +1,25 @@
 const express = require("express");
-const bcrypt = require("bcryptjs");
-const { check } = require("express-validator");
 const {
+  checkAuth,
+  doesExist,
   handleValidationErrors,
+  noConflicts,
+} = require("../../utils/middleWear.js");
+const {
+  validateSignupBody,
+  signupCustomValidator,
+  validateQuery,
+  validateSpot,
+  validateDate,
+  validateLogin,
+  validateReview,
+} = require("../../utils/validators");
+const {
+  dateToString,
   dateIsBeforeDate,
   dateIsAfterDate,
-  dateToString,
-} = require("../../utils/validation");
-const { setTokenCookie, requireAuth } = require("../../utils/auth");
+} = require("../../utils/helperFunctions")
+const { requireAuth } = require("../../utils/auth");
 const {
   Spot,
   User,
@@ -28,52 +40,6 @@ router.get("/current", requireAuth, async (req, res) => {
   });
   return res.json(bookings);
 });
-
-const validateDate = [
-  check("startDate")
-    .custom((startDate) => {
-      const today = dateToString(new Date());
-      return dateIsBeforeDate(today, startDate);
-    })
-    .withMessage("startDate cannot be in the past"),
-  check("endDate")
-    .custom((endDate, { req }) => {
-      return dateIsBeforeDate(req.body.startDate, endDate);
-    })
-    .withMessage("endDate cannot be on or before startDate"),
-  handleValidationErrors,
-];
-
-const noConflicts = async (req, res, next) => {
-  console.log("here");
-  const spot = await Spot.findByPk(req.booking.spotId);
-  const error = {
-    message: "Sorry, this spot is already booked for the specified dates",
-  };
-  error.errors = {};
-  let conflict = false;
-  const bookings = await spot.getBookings();
-  for (const booking of bookings) {
-    if (
-      !dateIsBeforeDate(req.body.startDate, dateToString(booking.startDate)) &&
-      !dateIsAfterDate(req.body.startDate, dateToString(booking.endDate))
-    ) {
-      conflict = true;
-      error.errors.startDate = "Start date conflicts with an existing booking";
-    }
-    if (
-      !dateIsBeforeDate(req.body.endDate, dateToString(booking.startDate)) &&
-      !dateIsAfterDate(req.body.endDate, dateToString(booking.endDate))
-    ) {
-      conflict = true;
-      error.errors.endDate = "End date conflicts with an existing booking";
-    }
-  }
-  if (conflict) {
-    return res.json(error);
-  }
-  next();
-};
 
 const bookingExist = async (req, res, next) => {
   req.booking = await Booking.findByPk(req.params.bookingId);

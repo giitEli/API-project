@@ -71,12 +71,12 @@ app.use((err, _req, _res, next) => {
 // Error formatter
 app.use((err, _req, res, _next) => {
   res.status(err.status || 500);
-  console.error(err);
+  console.log(err);
   res.json({
-    title: err.title || "Server Error",
-    message: err.message,
+    // title: err.title || "Server Error",
+    message: "Bad request",
     errors: err.errors,
-    stack: isProduction ? null : err.stack,
+    // stack: isProduction ? null : err.stack,
   });
 });
 
