@@ -7,36 +7,36 @@ if (process.env.NODE_ENV === "production") {
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await ReviewImage.bulkCreate(
-      [
-        {
-          reviewId: 1,
-          url: "image url",
-        },
-        {
-          reviewId: 1,
-          url: "image url",
-        },
-        {
-          reviewId: 1,
-          url: "image url",
-        },
-        {
-          reviewId: 2,
-          url: "image url",
-        },
-        {
-          reviewId: 2,
-          url: "image url",
-        },
-      ],
-      { validate: true }
-    );
+    // await ReviewImage.bulkCreate(
+    //   [
+    //     {
+    //       reviewId: 1,
+    //       url: "image url",
+    //     },
+    //     {
+    //       reviewId: 1,
+    //       url: "image url",
+    //     },
+    //     {
+    //       reviewId: 1,
+    //       url: "image url",
+    //     },
+    //     {
+    //       reviewId: 2,
+    //       url: "image url",
+    //     },
+    //     {
+    //       reviewId: 2,
+    //       url: "image url",
+    //     },
+    //   ],
+    //   { validate: true }
+    // );
   },
 
   async down(queryInterface, Sequelize) {
-    options.tableName = "ReviewImages";
-    const Op = Sequelize.Op;
-    return queryInterface.bulkDelete(options);
+    // options.tableName = "ReviewImages";
+    // const Op = Sequelize.Op;
+    // return queryInterface.bulkDelete(options);
   },
 };

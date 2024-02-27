@@ -35,20 +35,23 @@ const { Op } = require("sequelize");
 const router = express.Router();
 
 router.get("/", validateQuery, async (req, res) => {
+  let { page, size, minLat, maxLat, minLng, maxLng, minPrice, maxPrice } =
+    req.query;
   const searchQuery = {};
-  searchQuery.where = {};
 
-  if (!req.query.size || Number(req.query.size > 20)) {
+  size = Number(size);
+  if (!size || size > 20) {
     searchQuery.limit = 20;
-  } else searchQuery.limit = Number(req.query.size);
+  } else searchQuery.limit = size;
 
-  if (!req.query.page) {
+  page = Number(page);
+  if (!page) {
     searchQuery.offset = 0;
-  } else if (Number(req.query.page > 10)) {
+  } else if (page > 10) {
     searchQuery.offset = 9 * searchQuery.limit;
-  } else searchQuery.offset = (Number(req.query.size) - 1) * searchQuery.limit;
+  } else searchQuery.offset = (page - 1) * searchQuery.limit;
 
-  const { minLat, maxLat, minLng, maxLng, minPrice, maxPrice } = req.query;
+  searchQuery.where = {};
 
   if (minLat || maxLat) searchQuery.where.lat = {};
   if (minLat) searchQuery.where.lat[Op.gt] = Number(minLat);
@@ -62,13 +65,13 @@ router.get("/", validateQuery, async (req, res) => {
   if (minPrice) searchQuery.where.price[Op.gt] = Number(minPrice);
   if (maxPrice) searchQuery.where.price[Op.lt] = Number(maxPrice);
 
-  let spots = await Spot.findAll();
+  let spots = await Spot.findAll(searchQuery);
   spots = JSON.parse(JSON.stringify(spots));
 
   const reviews = await Review.findAll({
     attributes: ["spotId", "stars"],
   });
-  
+
   const spotImages = await SpotImage.findAll({
     attributes: ["spotId", "url", "preview"],
   });
