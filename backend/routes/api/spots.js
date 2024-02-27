@@ -127,12 +127,14 @@ router.get(
     },
   }),
   async (req, res, next) => {
-    const spot = JSON.parse(JSON.stringify(req.Spot));
-
-    const reviews = await Review.findAll({
+    const reviews = await req.Spot.getReviews({
       attributes: ["spotId", "stars"],
     });
+
+    const spot = JSON.parse(JSON.stringify(req.Spot));
+
     spot.avgStarRating = getAvgRating(spot, reviews);
+    spot.numReviews = reviews.length;
 
     return res.status(200).json(spot);
   }
@@ -311,7 +313,7 @@ router.get(
 
     const bookings = await spot.getBookings(query);
 
-    return res.status(200).json({ Booking: bookings });
+    return res.status(200).json({ Bookings: bookings });
   }
 );
 

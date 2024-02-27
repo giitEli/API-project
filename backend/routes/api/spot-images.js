@@ -31,16 +31,6 @@ const {
 
 const router = express.Router();
 
-const userIsOwner = async (req, res, next) => {
-  const spot = await req.recordData.getSpot();
-  if (spot.ownerId !== req.user.id) {
-    return res.status(403).json({
-      message: "Forbidden",
-    });
-  }
-  next();
-};
-
 router.delete(
   "/:imageId",
   requireAuth,

@@ -3,11 +3,6 @@ const dateIsBeforeDate = (date1, date2) => {
   const date2Arr = date2.split("-");
 
   for (let i = 0; i < 3; i++) {
-    console.log(
-      Number(date1Arr[i]),
-      Number(date2Arr[i]),
-      Number(date1Arr[i]) < Number(date2Arr[i])
-    );
     if (Number(date1Arr[i]) < Number(date2Arr[i])) return true;
     if (Number(date1Arr[i]) > Number(date2Arr[i])) return false;
   }

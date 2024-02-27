@@ -30,6 +30,13 @@ const {
 
 const doesExist = (model, modelName, param, options) => {
   return async (req, res, next) => {
+    const numParam = Number(req.params[param]);
+    if (!numParam || numParam % 1 !== 0) {
+      res.status(400).json({
+        message: `${param} isn't a valid integer`,
+      });
+    }
+
     if (!options) options = {};
     let { query, associated, missing } = options;
     if (!query) query = {};
@@ -37,14 +44,14 @@ const doesExist = (model, modelName, param, options) => {
     query.where = {
       id: req.params[param],
     };
-    console.log()
-    req[modelName] = await model.findOne(query);
 
+    req[modelName] = await model.findOne(query);
     if (!req[modelName]) {
       return res.status(404).json({
         message: `${missing} couldn't be found`,
       });
     }
+
     if (associated) {
       req[associated.modelName] = await associated.model.findOne({
         where: {
@@ -62,15 +69,15 @@ const checkAuth = (...options) => {
     for (const option of options) {
       let { model, key, match } = option;
       if (
-        (!match && req.user.id === req[model][key]) ||
-        (match && req.user.id !== req[model][key])
+        (match && req.user.id === req[model][key]) ||
+        (!match && req.user.id !== req[model][key])
       ) {
-        return res.status(403).json({
-          message: "Forbidden",
-        });
+        return next();
       }
     }
-    next();
+    return res.status(403).json({
+      message: "Forbidden",
+    });
   };
 };
 
@@ -80,7 +87,6 @@ const handleValidationErrors = (req, res, next) => {
   if (validationErrors.errors.length) {
     const err = {};
     err.message = "Bad request";
-    console.log(validationErrors.errors);
     err.errors = {};
     for (let validationError of validationErrors.errors) {
       err.errors[validationError.path] = validationError.msg;
@@ -166,8 +172,7 @@ const isCurrent = (req, res, next) => {
 };
 
 const notStarted = (req, res, next) => {
-  const booking = req.recordData;
-  if (!dateIsBeforeDate(getToday(), booking.startDate)) {
+  if (!dateIsBeforeDate(getToday(), req.Booking.startDate)) {
     res.status(403).json({
       message: "Bookings that have been started can't be deleted",
     });
