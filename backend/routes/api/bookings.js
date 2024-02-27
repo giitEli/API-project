@@ -4,6 +4,9 @@ const {
   doesExist,
   handleValidationErrors,
   noConflicts,
+  isCurrent,
+  isPast,
+  notStarted,
 } = require("../../utils/middleWear.js");
 const {
   validateSignupBody,
@@ -18,7 +21,8 @@ const {
   dateToString,
   dateIsBeforeDate,
   dateIsAfterDate,
-} = require("../../utils/helperFunctions")
+  getToday,
+} = require("../../utils/helperFunctions");
 const { requireAuth } = require("../../utils/auth");
 const {
   Spot,
@@ -35,77 +39,36 @@ router.get("/current", requireAuth, async (req, res) => {
   const bookings = await Booking.findAll({
     where: {
       userId: req.user.id,
-      include: [Spot],
     },
+    include: [
+      {
+        model: Spot,
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+      },
+    ],
   });
   return res.json(bookings);
 });
 
-const bookingExist = async (req, res, next) => {
-  req.booking = await Booking.findByPk(req.params.bookingId);
-  if (!req.booking) {
-    return res.json({
-      message: "Booking couldn't be found",
-    });
-  }
-  next();
-};
-
-const correctAuth = async (req, res, next) => {
-  if (req.user.id !== req.booking.userId) {
-    return res.json({
-      message: "correct authorization required",
-    });
-  }
-  next();
-};
-
-const isCurrentBooking = async (req, res, next) => {
-  const today = dateToString(new Date());
-  const bookingEndDate = dateToString(req.booking.endDate);
-  if (dateIsAfterDate(today, bookingEndDate)) {
-    return res.json({
-      message: "Past bookings can't be modified",
-    });
-  }
-  next();
-};
-
-const belongToOwnerOrUser = async (req, res, next) => {
-  const spot = await Spot.findByPk(req.booking.spotId);
-  if (req.booking.userId !== req.user.id && spot.ownerId !== req.user.id) {
-    return res.json({
-      message: "Only User or Owner can delete booking",
-    });
-  }
-  next();
-};
-
-const notPast = async (req, res, next) => {
-  if (
-    dateIsAfterDate(
-      dateToString(new Date()),
-      dateToString(req.booking.startDate)
-    )
-  ) {
-    return res.json({
-      message: "Bookings that have been started can't be deleted",
-    });
-  }
-  next();
-};
-
 router.put(
   "/:bookingId",
   requireAuth,
-  bookingExist,
-  correctAuth,
+  doesExist(Booking, "Booking", "bookingId", {
+    associated: {
+      model: Spot,
+      modelName: "Spot",
+      key: "spotId",
+    },
+  }),
+  checkAuth({ model: "Booking", key: "userId", match: true }),
   validateDate,
-  isCurrentBooking,
-  noConflicts,
+  isCurrent,
+  noConflicts(),
   async (req, res) => {
     const { startDate, endDate } = req.body;
-    const updateBooking = await req.booking.update({
+    const updateBooking = await req.Booking.update({
       startDate,
       endDate,
     });
@@ -116,12 +79,21 @@ router.put(
 router.delete(
   "/:bookingId",
   requireAuth,
-  bookingExist,
-  belongToOwnerOrUser,
-  notPast,
+  doesExist(Booking, "Booking", "bookingId", {
+    associated: {
+      model: Spot,
+      modelName: "Spot",
+      key: "spotId",
+    },
+  }),
+  checkAuth(
+    { model: Booking, modelName: "Booking", key: "userId" },
+    { model: Spot, modelName: "Spot", key: "ownerId" }
+  ),
+  notStarted,
   async (req, res) => {
-    await req.booking.destroy();
-    res.json({
+    await req.recordData.destroy();
+    res.status(200).json({
       message: "Successfully deleted",
     });
   }

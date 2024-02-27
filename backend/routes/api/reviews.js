@@ -48,25 +48,14 @@ router.get("/current", requireAuth, async (req, res, next) => {
     ],
   });
 
-  reviews = JSON.parse(JSON.stringify(reviews));
-
-  const spotImages = await SpotImage.findAll({
-    where: {
-      preview: true,
-    },
-  });
-  for (const review of reviews) {
-    review.Spot.previewImage = getPreviewImage(review.Spot, spotImages);
-  }
-
   res.json({ Reviews: reviews });
 });
 
 router.post(
   "/:reviewId/images",
   requireAuth,
-  doesExist(Review, "reviewId", "Review"),
-  checkAuth("userId"),
+  doesExist(Review, "Review", "reviewId"),
+  checkAuth({ model: "Review", key: "userId", match: true }),
   validateReviewImage,
   async (req, res) => {
     const review = await Review.findByPk(req.params.reviewId);
@@ -92,13 +81,12 @@ router.post(
 router.put(
   "/:reviewId",
   requireAuth,
-  doesExist(Review, "reviewId", "Review"),
-  checkAuth("userId"),
+  doesExist(Review, "Review", "reviewId"),
+  checkAuth({ model: "Review", key: "userId", match: true }),
   validateReview,
   async (req, res, next) => {
-    const reviewToUpdate = req.recordData;
     const { review, stars } = req.body;
-    const updatedReview = await reviewToUpdate.update({ review, stars });
+    const updatedReview = await req.Review.update({ review, stars });
 
     return res.status(200).json(updatedReview);
   }
@@ -107,8 +95,8 @@ router.put(
 router.delete(
   "/:reviewId",
   requireAuth,
-  doesExist(Review, "reviewId", "Review"),
-  checkAuth("userId"),
+  doesExist(Review, "Review", "reviewId"),
+  checkAuth({ model: "Review", key: "userId", match: true }),
   async (req, res, next) => {
     const review = req.recordData;
 

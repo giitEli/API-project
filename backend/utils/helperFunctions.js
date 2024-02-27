@@ -1,10 +1,17 @@
 const dateIsBeforeDate = (date1, date2) => {
   const date1Arr = date1.split("-");
   const date2Arr = date2.split("-");
+
   for (let i = 0; i < 3; i++) {
+    console.log(
+      Number(date1Arr[i]),
+      Number(date2Arr[i]),
+      Number(date1Arr[i]) < Number(date2Arr[i])
+    );
     if (Number(date1Arr[i]) < Number(date2Arr[i])) return true;
     if (Number(date1Arr[i]) > Number(date2Arr[i])) return false;
   }
+
   if (date1 === date2) return false;
 };
 
@@ -18,8 +25,20 @@ const dateIsAfterDate = (date1, date2) => {
   if (date1 === date2) return false;
 };
 
-const dateToString = (date) => {
-  return [date.getFullYear(), date.getMonth() + 1, date.getDate()].join("-");
+const getToday = () => {
+  const today = new Date();
+  return [today.getFullYear(), today.getMonth() + 1, today.getDate()].join("-");
+};
+
+const isDate = (date) => {
+  if (typeof date !== "string") return "1";
+  date = date.split("-");
+  if (date.length !== 3) return "2";
+  const [year, month, day] = date;
+  for (const part of date) {
+    if (typeof Number(part) !== "number") return part + typeof part;
+  }
+  return true;
 };
 
 const getAvgRating = (spot, reviews) => {
@@ -52,10 +71,11 @@ const getPreviewImage = (spot, spotImages) => {
 };
 
 module.exports = {
-  dateToString,
   dateIsBeforeDate,
   dateIsAfterDate,
   getAvgRating,
   getReviewCount,
   getPreviewImage,
+  getToday,
+  isDate,
 };

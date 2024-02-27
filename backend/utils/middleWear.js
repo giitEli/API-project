@@ -1,4 +1,10 @@
 const { validationResult } = require("express-validator");
+const { Op } = require("sequelize");
+const {
+  dateIsBeforeDate,
+  dateIsAfterDate,
+  getToday,
+} = require("./helperFunctions.js");
 
 const {
   Spot,
@@ -12,37 +18,59 @@ const {
 //user must be logged in
 //req must have record inside of it and record must exist
 
-const checkAuth = (key, notMatch) => {
+// //options...
+// // {
+// //   model: "spot"
+// //   param:
+// //   associated: {
+//   model
+//   function
+// }
+// // }
+
+const doesExist = (model, modelName, param, options) => {
   return async (req, res, next) => {
-    const forbiddenMessage = {
-      message: "Forbidden",
+    if (!options) options = {};
+    let { query, associated, missing } = options;
+    if (!query) query = {};
+    if (!missing) missing = modelName;
+    query.where = {
+      id: req.params[param],
     };
+    console.log()
+    req[modelName] = await model.findOne(query);
 
-    if (notMatch && req.user.id === req.recordData[key]) {
-      return res.status(403).json(forbiddenMessage);
-    } else if (!notMatch && req.user.id !== req.recordData[key]) {
-      return res.status(403).json(forbiddenMessage);
-    }
-
-    next();
-  };
-};
-
-const doesExist = (model, reqParam, errorString, selectorObj) => {
-  return async (req, res, next) => {
-    if (!selectorObj) selectorObj = {};
-    selectorObj.where = {
-      id: req.params[reqParam],
-    };
-    req.recordData = await model.findOne(selectorObj);
-
-    if (!req.recordData) {
+    if (!req[modelName]) {
       return res.status(404).json({
-        message: `${errorString} couldn't be found`,
+        message: `${missing} couldn't be found`,
+      });
+    }
+    if (associated) {
+      req[associated.modelName] = await associated.model.findOne({
+        where: {
+          id: req[modelName][associated.key],
+        },
       });
     }
 
     return next();
+  };
+};
+
+const checkAuth = (...options) => {
+  return async (req, res, next) => {
+    for (const option of options) {
+      let { model, key, match } = option;
+      if (
+        (!match && req.user.id === req[model][key]) ||
+        (match && req.user.id !== req[model][key])
+      ) {
+        return res.status(403).json({
+          message: "Forbidden",
+        });
+      }
+    }
+    next();
   };
 };
 
@@ -75,35 +103,94 @@ const handleValidationErrors = (req, res, next) => {
   //   next(err);
   // }
 };
+const noConflicts = (options) => {
+  return async (req, res, next) => {
+    let queryObj = {};
+    if (req.Booking) {
+      queryObj = {
+        where: {
+          id: {
+            [Op.not]: req.Booking.id,
+          },
+        },
+      };
+    }
+    const spot = req.Spot;
 
-const noConflicts = async (req, res, next) => {
-  const spot = req.recordData;
-  const error = {
-    message: "Sorry, this spot is already booked for the specified dates",
+    const error = {
+      message: "Sorry, this spot is already booked for the specified dates",
+    };
+    error.errors = {};
+    let conflict = false;
+    const bookings = await spot.getBookings(queryObj);
+    for (const booking of bookings) {
+      if (
+        !dateIsBeforeDate(req.body.startDate, booking.startDate) &&
+        !dateIsAfterDate(req.body.startDate, booking.endDate)
+      ) {
+        conflict = true;
+        error.errors.startDate =
+          "Start date conflicts with an existing booking";
+      }
+      if (
+        !dateIsBeforeDate(req.body.endDate, booking.startDate) &&
+        !dateIsAfterDate(req.body.endDate, booking.endDate)
+      ) {
+        conflict = true;
+        error.errors.endDate = "End date conflicts with an existing booking";
+      }
+      if (
+        dateIsBeforeDate(req.body.startDate, booking.startDate) &&
+        dateIsAfterDate(req.body.endDate, booking.endDate)
+      ) {
+        conflict = true;
+        error.errors.dates =
+          "Start date and end date surround existing booking";
+      }
+    }
+    if (conflict) {
+      return res.status(403).json(error);
+    }
+    next();
   };
-  error.errors = {};
-  let conflict = false;
-  const bookings = await spot.getBookings();
-  for (const booking of bookings) {
-    if (
-      !dateIsBeforeDate(req.body.startDate, dateToString(booking.startDate)) &&
-      !dateIsAfterDate(req.body.startDate, dateToString(booking.endDate))
-    ) {
-      conflict = true;
-      error.errors.startDate = "Start date conflicts with an existing booking";
-    }
-    if (
-      !dateIsBeforeDate(req.body.endDate, dateToString(booking.startDate)) &&
-      !dateIsAfterDate(req.body.endDate, dateToString(booking.endDate))
-    ) {
-      conflict = true;
-      error.errors.endDate = "End date conflicts with an existing booking";
-    }
-  }
-  if (conflict) {
-    return res.json(error);
+};
+
+const isCurrent = (req, res, next) => {
+  const booking = req.Booking;
+  if (dateIsAfterDate(getToday(), booking.endDate)) {
+    return res.status(403).json({
+      message: "Past bookings can't be modified",
+    });
   }
   next();
 };
 
-module.exports = { checkAuth, doesExist, handleValidationErrors, noConflicts };
+const notStarted = (req, res, next) => {
+  const booking = req.recordData;
+  if (!dateIsBeforeDate(getToday(), booking.startDate)) {
+    res.status(403).json({
+      message: "Bookings that have been started can't be deleted",
+    });
+  }
+  next();
+};
+
+const isPast = async (req, res, next) => {
+  const booking = req.recordData;
+  if ((dateIsBeforeDate(booking.endDate), getToday())) {
+    res.status(403).json({
+      message: "Past bookings can't be modified",
+    });
+  }
+  next();
+};
+
+module.exports = {
+  checkAuth,
+  doesExist,
+  handleValidationErrors,
+  noConflicts,
+  isCurrent,
+  isPast,
+  notStarted,
+};

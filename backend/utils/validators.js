@@ -1,6 +1,15 @@
 const { check, oneOf, query, body } = require("express-validator");
 const { handleValidationErrors } = require("./middleWear.js");
 const { User } = require("../db/models");
+const {
+  dateIsBeforeDate,
+  dateIsAfterDate,
+  getAvgRating,
+  getReviewCount,
+  getPreviewImage,
+  getToday,
+  isDate,
+} = require("./helperFunctions.js");
 /*
 flow:
 
@@ -17,7 +26,7 @@ preform action
 */
 
 const validateSignupBody = [
-  check("email").isEmail().withMessage("Please provide a valid email."),
+  check("email").isEmail().withMessage("Invalid email"),
   check("username")
     .exists({ checkFalsy: true })
     .withMessage("Username is required"),
@@ -145,15 +154,12 @@ const signupCustomValidator = async (req, res, next) => {
 
 const validateDate = [
   check("startDate")
-    .custom((startDate) => {
-      const today = dateToString(new Date());
-      return dateIsBeforeDate(today, startDate);
-    })
+    .custom((startDate) => isDate(startDate))
+    .custom((startDate) => dateIsBeforeDate(getToday(), startDate))
     .withMessage("startDate cannot be in the past"),
   check("endDate")
-    .custom((endDate, { req }) => {
-      return dateIsBeforeDate(req.body.startDate, endDate);
-    })
+    .custom((endDate) => isDate(endDate))
+    .custom((endDate, { req }) => dateIsAfterDate(endDate, req.body.startDate))
     .withMessage("endDate cannot be on or before startDate"),
   handleValidationErrors,
 ];
@@ -181,7 +187,7 @@ const validateReview = [
 ];
 
 const validateReviewImage = [
-  check("url").isURL().withMessage("must be a valid url"),
+  check("url").isString().withMessage("must be a valid url"),
   handleValidationErrors,
 ];
 
@@ -194,5 +200,5 @@ module.exports = {
   validateLogin,
   validateReview,
   validateSpotImage,
-  validateReviewImage
+  validateReviewImage,
 };

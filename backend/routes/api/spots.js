@@ -20,6 +20,7 @@ const {
   getAvgRating,
   getReviewCount,
   getPreviewImage,
+  dateIsBeforeDate,
 } = require("../../utils/helperFunctions");
 const {
   Spot,
@@ -29,18 +30,7 @@ const {
   ReviewImage,
   Booking,
 } = require("../../db/models");
-const { INTEGER, Op } = require("sequelize");
-
-const updateSpotAvgRating = async (spot, reviews, newReviewStars) => {
-  const avgRating = parseInt(
-    (reviews.reduce((acc, review) => (acc += Number(review.stars)), 0) +
-      Number(newReviewStars)) /
-      (reviews.length + 1)
-  );
-  await spot.update({
-    avgRating,
-  });
-};
+const { Op } = require("sequelize");
 
 const router = express.Router();
 
@@ -54,7 +44,7 @@ router.get("/", validateQuery, async (req, res) => {
 
   if (!req.query.page) {
     searchQuery.offset = 0;
-  } else if (Number(page.query.page > 10)) {
+  } else if (Number(req.query.page > 10)) {
     searchQuery.offset = 9 * searchQuery.limit;
   } else searchQuery.offset = (Number(req.query.size) - 1) * searchQuery.limit;
 
@@ -78,13 +68,13 @@ router.get("/", validateQuery, async (req, res) => {
   const reviews = await Review.findAll({
     attributes: ["spotId", "stars"],
   });
+  
   const spotImages = await SpotImage.findAll({
     attributes: ["spotId", "url", "preview"],
   });
 
   for (let i = 0; i < spots.length; i++) {
     spots[i].avgRating = getAvgRating(spots[i], reviews);
-    spots[i].previewImage = getPreviewImage(spots[i], spotImages);
   }
 
   return res.status(200).json({ Spots: spots });
@@ -107,7 +97,6 @@ router.get("/current", requireAuth, async (req, res) => {
 
   for (let i = 0; i < spots.length; i++) {
     spots[i].avgRating = getAvgRating(spots[i], reviews);
-    spots[i].previewImage = getPreviewImage(spots[i], spotImages);
   }
 
   return res.status(200).json({ Spots: spots });
@@ -115,20 +104,23 @@ router.get("/current", requireAuth, async (req, res) => {
 
 router.get(
   "/:spotId",
-  doesExist(Spot, "spotId", "Spot", {
-    include: [
-      { model: SpotImage, attributes: ["id", "url", "preview"] },
-      {
-        model: User,
-        attributes: ["id", "firstName", "lastName"],
-        as: "Owner",
+  doesExist(Spot, "Spot", "spotId", {
+    query: {
+      include: [
+        { model: SpotImage, attributes: ["id", "url", "preview"] },
+        {
+          model: User,
+          attributes: ["id", "firstName", "lastName"],
+          as: "Owner",
+        },
+      ],
+      attributes: {
+        exclude: ["previewImage"],
       },
-    ],
+    },
   }),
   async (req, res, next) => {
-    let spot = req.recordData;
-
-    spot = JSON.parse(JSON.stringify(spot));
+    const spot = JSON.parse(JSON.stringify(req.Spot));
 
     const reviews = await Review.findAll({
       attributes: ["spotId", "stars"],
@@ -160,11 +152,11 @@ router.post("/", requireAuth, validateSpot, async (req, res) => {
 router.put(
   "/:spotId",
   requireAuth,
-  doesExist(Spot, "spotId", "Spot"),
-  checkAuth("ownerId"),
+  doesExist(Spot, "Spot", "spotId"),
+  checkAuth({ model: "Spot", key: "ownerId", match: true }),
   validateSpot,
   async (req, res, next) => {
-    const spot = req.recordData;
+    const spot = req.Spot;
 
     const {
       address,
@@ -178,7 +170,7 @@ router.put(
       price,
     } = req.body;
 
-    await spot.update({
+    let newSpot = await spot.update({
       address,
       city,
       state,
@@ -190,17 +182,21 @@ router.put(
       price,
     });
 
-    return res.status(200).json(spot);
+    newSpot = JSON.parse(JSON.stringify(newSpot));
+
+    delete newSpot.previewImage;
+
+    return res.status(200).json(newSpot);
   }
 );
 
 router.delete(
   "/:spotId",
   requireAuth,
-  doesExist(Spot, "spotId", "Spot"),
-  checkAuth("ownerId"),
+  doesExist(Spot, "Spot", "spotId"),
+  checkAuth({ model: "Spot", key: "ownerId", match: true }),
   async (req, res, next) => {
-    const spot = req.recordData;
+    const spot = req.Spot;
 
     await spot.destroy();
     return res.status(200).json({
@@ -212,11 +208,11 @@ router.delete(
 router.post(
   "/:spotId/images",
   requireAuth,
-  doesExist(Spot, "spotId", "Spot"),
-  checkAuth("ownerId"),
+  doesExist(Spot, "Spot", "spotId"),
+  checkAuth({ model: "Spot", key: "ownerId", match: true }),
   validateSpotImage,
   async (req, res, next) => {
-    const spot = req.recordData;
+    const spot = req.Spot;
 
     const { url, preview } = req.body;
 
@@ -225,6 +221,10 @@ router.post(
       url,
       preview,
     });
+
+    if (preview === true) {
+      spot.update({ previewImage: url });
+    }
 
     res.status(200).json({
       id: spotImage.id,
@@ -236,9 +236,9 @@ router.post(
 
 router.get(
   "/:spotId/reviews",
-  doesExist(Spot, "spotId", "Spot"),
+  doesExist(Spot, "Spot", "spotId"),
   async (req, res) => {
-    const reviews = await req.recordData.getReviews({
+    const reviews = await req.Spot.getReviews({
       where: {
         spotId: req.params.spotId,
       },
@@ -255,10 +255,10 @@ router.get(
 router.post(
   "/:spotId/reviews",
   requireAuth,
-  doesExist(Spot, "spotId", "Spot"),
+  doesExist(Spot, "Spot", "spotId"),
   validateReview,
   async (req, res, next) => {
-    const spot = req.recordData;
+    const spot = req.Spot;
 
     const reviews = await spot.getReviews();
 
@@ -285,34 +285,44 @@ router.post(
 router.get(
   "/:spotId/bookings",
   requireAuth,
-  doesExist(Spot, "spotId", "Spot"),
-  checkAuth("ownerId"),
+  doesExist(Spot, "Spot", "spotId"),
   async (req, res) => {
-    const spot = req.recordData;
+    const spot = req.Spot;
 
-    const bookings = await spot.getBookings({
-      include: User,
-    });
-    return res.json(bookings);
+    const query = {};
+
+    if (req.user.id === spot.ownerId) {
+      query.include = [
+        {
+          model: User,
+          attributes: ["id", "firstName", "lastName"],
+        },
+      ];
+    } else {
+      query.attributes = ["spotId", "startDate", "endDate"];
+    }
+
+    const bookings = await spot.getBookings(query);
+
+    return res.status(200).json({ Booking: bookings });
   }
 );
 
 router.post(
   "/:spotId/bookings",
   requireAuth,
-  doesExist(Spot, "spotId", "Spot"),
-  checkAuth("ownerId", true),
+  doesExist(Spot, "Spot", "spotId"),
+  checkAuth({ model: "Spot", key: "ownerId", match: false }),
   validateDate,
-  noConflicts,
+  noConflicts({ noSelfConflict: false }),
   async (req, res) => {
     const { startDate, endDate } = req.body;
-    const spot = req.recordData;
-    const newBooking = await spot.createBooking({
+    const newBooking = await req.Spot.createBooking({
       userId: req.user.id,
       startDate,
       endDate,
     });
-    return res.status(201).json(newBooking);
+    return res.status(200).json(newBooking);
   }
 );
 

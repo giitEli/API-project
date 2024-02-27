@@ -18,7 +18,7 @@ const {
   dateToString,
   dateIsBeforeDate,
   dateIsAfterDate,
-} = require("../../utils/helperFunctions")
+} = require("../../utils/helperFunctions");
 const { requireAuth } = require("../../utils/auth");
 const {
   Spot,
@@ -54,11 +54,11 @@ const userOwnsReview = async (req, res, next) => {
 router.delete(
   "/:imageId",
   requireAuth,
-  imageExist,
-  userOwnsReview,
+  doesExist(ReviewImage, "ReviewImage", "imageId", { missing: "Review Image" }),
+  checkAuth({ model: Review, key: "userId", match: true }),
   async (req, res) => {
     await req.reviewImage.destroy();
-    return res.json({
+    return res.status(200).json({
       message: "Successfully deleted",
     });
   }
