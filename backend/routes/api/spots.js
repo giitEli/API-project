@@ -37,7 +37,11 @@ const router = express.Router();
 router.get("/", validateQuery, async (req, res) => {
   let { page, size, minLat, maxLat, minLng, maxLng, minPrice, maxPrice } =
     req.query;
-  const searchQuery = {};
+  const searchQuery = {
+    attributes: {
+      exclude: ["previewImage"],
+    },
+  };
 
   size = Number(size);
   if (!size || size > 20) {

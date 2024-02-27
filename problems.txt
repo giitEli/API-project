@@ -1,0 +1,23 @@
+GET /spots
+response doesn't need previewImage
+
+GET /spots/:spotId
+response doesn't have numReview
+
+GET /bookings/current
+response obj isn't wrapped in in another obj with Booking: pointing to the bookings
+
+GET /spots/:spotId/bookings
+response obj has Booking instead of Bookings
+
+DELETE /bookings/:bookingId
+TypeError: Cannot read properties of undefined (reading 'userId')
+
+DELETE /review-images/:reviewImageId
+TypeError: Cannot read properties of undefined (reading 'userId')
+
+DELETE /reviews/:reviewId
+TypeError: Cannot read properties of undefined (reading 'destroy')
+
+DELETE /bookings/:bookingId
+TypeError: Cannot read properties of undefined (reading 'userId')
