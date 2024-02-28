@@ -49,7 +49,7 @@ router.get("/current", requireAuth, async (req, res) => {
       },
     ],
   });
-  return res.json(bookings);
+  return res.json({ Bookings: bookings });
 });
 
 router.put(
@@ -87,12 +87,12 @@ router.delete(
     },
   }),
   checkAuth(
-    { model: Booking, modelName: "Booking", key: "userId" },
-    { model: Spot, modelName: "Spot", key: "ownerId" }
+    { model: "Booking", key: "userId", match: true },
+    { model: "Spot", key: "ownerId", match: true }
   ),
   notStarted,
   async (req, res) => {
-    await req.recordData.destroy();
+    await req.Booking.destroy();
     res.status(200).json({
       message: "Successfully deleted",
     });

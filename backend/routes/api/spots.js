@@ -37,7 +37,11 @@ const router = express.Router();
 router.get("/", validateQuery, async (req, res) => {
   let { page, size, minLat, maxLat, minLng, maxLng, minPrice, maxPrice } =
     req.query;
-  const searchQuery = {};
+  const searchQuery = {
+    attributes: {
+      exclude: ["previewImage"],
+    },
+  };
 
   size = Number(size);
   if (!size || size > 20) {
@@ -70,10 +74,6 @@ router.get("/", validateQuery, async (req, res) => {
 
   const reviews = await Review.findAll({
     attributes: ["spotId", "stars"],
-  });
-
-  const spotImages = await SpotImage.findAll({
-    attributes: ["spotId", "url", "preview"],
   });
 
   for (let i = 0; i < spots.length; i++) {
@@ -123,12 +123,14 @@ router.get(
     },
   }),
   async (req, res, next) => {
-    const spot = JSON.parse(JSON.stringify(req.Spot));
-
-    const reviews = await Review.findAll({
+    const reviews = await req.Spot.getReviews({
       attributes: ["spotId", "stars"],
     });
+
+    const spot = JSON.parse(JSON.stringify(req.Spot));
+
     spot.avgStarRating = getAvgRating(spot, reviews);
+    spot.numReviews = reviews.length;
 
     return res.status(200).json(spot);
   }
@@ -307,7 +309,7 @@ router.get(
 
     const bookings = await spot.getBookings(query);
 
-    return res.status(200).json({ Booking: bookings });
+    return res.status(200).json({ Bookings: bookings });
   }
 );
 

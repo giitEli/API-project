@@ -98,7 +98,7 @@ router.delete(
   doesExist(Review, "Review", "reviewId"),
   checkAuth({ model: "Review", key: "userId", match: true }),
   async (req, res, next) => {
-    const review = req.recordData;
+    const review = req.Review;
 
     await review.destroy();
 

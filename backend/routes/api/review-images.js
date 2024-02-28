@@ -53,11 +53,21 @@ const userOwnsReview = async (req, res, next) => {
 
 router.delete(
   "/:imageId",
+  (req, res, next) => {
+    next()
+  },
   requireAuth,
-  doesExist(ReviewImage, "ReviewImage", "imageId", { missing: "Review Image" }),
-  checkAuth({ model: Review, key: "userId", match: true }),
+  doesExist(ReviewImage, "ReviewImage", "imageId", {
+    missing: "Review Image",
+    associated: {
+      modelName: "Review",
+      model: Review,
+      key: "reviewId"
+    },
+  }),
+  checkAuth({ model: "Review", key: "userId", match: true }),
   async (req, res) => {
-    await req.reviewImage.destroy();
+    await req.ReviewImage.destroy();
     return res.status(200).json({
       message: "Successfully deleted",
     });
