@@ -38,6 +38,7 @@ module.exports = (sequelize, DataTypes) => {
       price: DataTypes.INTEGER,
       previewImage: {
         type: DataTypes.STRING,
+        defaultValue: null,
       },
     },
     {

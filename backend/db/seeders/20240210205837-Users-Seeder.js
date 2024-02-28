@@ -10,43 +10,65 @@ if (process.env.NODE_ENV === "production") {
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    // await User.bulkCreate(
-    //   [
-    //     {
-    //       email: "demo@user.io",
-    //       firstName: "Bob",
-    //       lastName: "ross",
-    //       username: "Demo-lition",
-    //       hashedPassword: bcrypt.hashSync("password"),
-    //     },
-    //     {
-    //       email: "user1@user.io",
-    //       firstName: "ross",
-    //       lastName: "bob",
-    //       username: "FakeUser1",
-    //       hashedPassword: bcrypt.hashSync("password"),
-    //     },
-    //     {
-    //       email: "user2@user.io",
-    //       firstName: "me",
-    //       lastName: "myself",
-    //       username: "FakeUser2",
-    //       hashedPassword: bcrypt.hashSync("password"),
-    //     },
-    //   ],
-    //   { validate: true }
-    // );
+    await User.bulkCreate(
+      [
+        {
+          email: "spotOwnerOne@mail.com",
+          firstName: "Bob",
+          lastName: "Boberson",
+          username: "BigOwner1",
+          hashedPassword: bcrypt.hashSync("password"),
+        },
+        {
+          email: "spotOwnerTwo@mail.com",
+          firstName: "Phil",
+          lastName: "Philupson",
+          username: "LargeOwnerTwo",
+          hashedPassword: bcrypt.hashSync("password"),
+        },
+        {
+          email: "reviewerOne@mail.com",
+          firstName: "Elie",
+          lastName: "Elieson",
+          username: "realReviewsOne",
+          hashedPassword: bcrypt.hashSync("password"),
+        },
+        {
+          email: "raterTwo@mail.com",
+          firstName: "Frank",
+          lastName: "Franklinson",
+          username: "garbageRater2",
+          hashedPassword: bcrypt.hashSync("password"),
+        },
+        {
+          email: "ultimateBooker@mail.com",
+          firstName: "Brook",
+          lastName: "Brookbookbookerson",
+          username: "alwaysOnVacation",
+          hashedPassword: bcrypt.hashSync("password"),
+        },
+      ],
+      { validate: true }
+    );
   },
 
   async down(queryInterface, Sequelize) {
-    // options.tableName = "Users";
-    // const Op = Sequelize.Op;
-    // return queryInterface.bulkDelete(
-    //   options,
-    //   {
-    //     username: { [Op.in]: ["Demo-lition", "FakeUser1", "FakeUser2"] },
-    //   },
-    //   {}
-    // );
+    options.tableName = "Users";
+    const Op = Sequelize.Op;
+    return queryInterface.bulkDelete(
+      options,
+      {
+        username: {
+          [Op.in]: [
+            "BigOwner1",
+            "LargeOwnerTwo",
+            "realReviewsOne",
+            "garbageRater2",
+            "alwaysOnVacation",
+          ],
+        },
+      },
+      {}
+    );
   },
 };

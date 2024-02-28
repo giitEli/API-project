@@ -37,23 +37,24 @@ const router = express.Router();
 router.get("/", validateQuery, async (req, res) => {
   let { page, size, minLat, maxLat, minLng, maxLng, minPrice, maxPrice } =
     req.query;
-  const searchQuery = {
-    attributes: {
-      exclude: ["previewImage"],
-    },
-  };
+  const searchQuery = {};
 
   size = Number(size);
   if (!size || size > 20) {
     searchQuery.limit = 20;
+    size = 20;
   } else searchQuery.limit = size;
 
   page = Number(page);
   if (!page) {
     searchQuery.offset = 0;
+    page = 1;
   } else if (page > 10) {
     searchQuery.offset = 9 * searchQuery.limit;
-  } else searchQuery.offset = (page - 1) * searchQuery.limit;
+    page = 10;
+  } else {
+    searchQuery.offset = (page - 1) * searchQuery.limit;
+  }
 
   searchQuery.where = {};
 
@@ -80,7 +81,7 @@ router.get("/", validateQuery, async (req, res) => {
     spots[i].avgRating = getAvgRating(spots[i], reviews);
   }
 
-  return res.status(200).json({ Spots: spots });
+  return res.status(200).json({ Spots: spots, page, size });
 });
 
 router.get("/current", requireAuth, async (req, res) => {
@@ -93,9 +94,6 @@ router.get("/current", requireAuth, async (req, res) => {
 
   const reviews = await Review.findAll({
     attributes: ["spotId", "stars"],
-  });
-  const spotImages = await SpotImage.findAll({
-    attributes: ["spotId", "url", "preview"],
   });
 
   for (let i = 0; i < spots.length; i++) {
@@ -175,7 +173,7 @@ router.put(
       price,
     } = req.body;
 
-    let newSpot = await spot.update({
+    const newSpot = await spot.update({
       address,
       city,
       state,
@@ -187,11 +185,21 @@ router.put(
       price,
     });
 
-    newSpot = JSON.parse(JSON.stringify(newSpot));
-
-    delete newSpot.previewImage;
-
-    return res.status(200).json(newSpot);
+    return res.status(200).json({
+      id: newSpot.id,
+      ownerId: newSpot.ownerId,
+      address: newSpot.address,
+      city: newSpot.city,
+      state: newSpot.state,
+      country: newSpot.country,
+      lat: newSpot.lat,
+      lng: newSpot.lng,
+      name: newSpot.name,
+      description: newSpot.description,
+      price: newSpot.price,
+      createdAt: newSpot.createdAt,
+      updatedAt: newSpot.updatedAt,
+    });
   }
 );
 

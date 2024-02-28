@@ -80,13 +80,26 @@ const checkAuth = (...options) => {
     });
   };
 };
-
-const handleValidationErrors = (req, res, next) => {
+const handleOneOfValidationErrors = (req, res, next) => {
   const validationErrors = validationResult(req);
-
   if (validationErrors.errors.length) {
     const err = {};
-    err.message = "Bad request";
+    err.message = "Bad Request";
+    err.errors = {};
+    for (let validationError of validationErrors.errors) {
+      const path = validationError.nestedErrors[0][0].path;
+      err.errors[path] = validationError.msg;
+    }
+    return res.status(400).json(err);
+  }
+
+  next();
+};
+const handleValidationErrors = (req, res, next) => {
+  const validationErrors = validationResult(req);
+  if (validationErrors.errors.length) {
+    const err = {};
+    err.message = "Bad Request";
     err.errors = {};
     for (let validationError of validationErrors.errors) {
       err.errors[validationError.path] = validationError.msg;
@@ -180,7 +193,6 @@ const notStarted = (req, res, next) => {
   next();
 };
 
-
 const isPast = async (req, res, next) => {
   const booking = req.Booking;
   if ((dateIsBeforeDate(booking.endDate), getToday())) {
@@ -199,4 +211,5 @@ module.exports = {
   isCurrent,
   isPast,
   notStarted,
+  handleOneOfValidationErrors,
 };

@@ -1,5 +1,8 @@
 const { check, oneOf, query, body } = require("express-validator");
-const { handleValidationErrors } = require("./middleWear.js");
+const {
+  handleValidationErrors,
+  handleOneOfValidationErrors,
+} = require("./middleWear.js");
 const { User } = require("../db/models");
 const {
   dateIsBeforeDate,
@@ -128,7 +131,7 @@ const validateQuery = [
     ],
     { message: "Minimum price must be greater than or equal to 0" }
   ),
-  handleValidationErrors,
+  handleOneOfValidationErrors,
 ];
 
 // check to see if signup body has email or username of existing user
