@@ -180,6 +180,7 @@ const notStarted = (req, res, next) => {
   next();
 };
 
+
 const isPast = async (req, res, next) => {
   const booking = req.Booking;
   if ((dateIsBeforeDate(booking.endDate), getToday())) {
