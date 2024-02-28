@@ -137,33 +137,33 @@ router.get(
 router.post("/", requireAuth, validateSpot, async (req, res) => {
   const { address, city, state, country, lat, lng, name, description, price } =
     req.body;
-    const newSpot = await Spot.create({
-      address,
-      city,
-      state,
-      country,
-      lat,
-      lng,
-      name,
-      description,
-      price,
-    });
-
-    return res.status(201).json({
-      id: newSpot.id,
-      ownerId: newSpot.ownerId,
-      address: newSpot.address,
-      city: newSpot.city,
-      state: newSpot.state,
-      country: newSpot.country,
-      lat: newSpot.lat,
-      lng: newSpot.lng,
-      name: newSpot.name,
-      description: newSpot.description,
-      price: newSpot.price,
-      createdAt: newSpot.createdAt,
-      updatedAt: newSpot.updatedAt,
-    });
+  const newSpot = await Spot.create({
+    ownerId: req.user.id,
+    address,
+    city,
+    state,
+    country,
+    lat,
+    lng,
+    name,
+    description,
+    price,
+  });
+  return res.status(201).json({
+    id: newSpot.id,
+    ownerId: newSpot.ownerId,
+    address: newSpot.address,
+    city: newSpot.city,
+    state: newSpot.state,
+    country: newSpot.country,
+    lat: newSpot.lat,
+    lng: newSpot.lng,
+    name: newSpot.name,
+    description: newSpot.description,
+    price: newSpot.price,
+    createdAt: newSpot.createdAt,
+    updatedAt: newSpot.updatedAt,
+  });
 });
 
 router.put(
