@@ -181,7 +181,7 @@ const notStarted = (req, res, next) => {
 };
 
 const isPast = async (req, res, next) => {
-  const booking = req.recordData;
+  const booking = req.Booking;
   if ((dateIsBeforeDate(booking.endDate), getToday())) {
     res.status(403).json({
       message: "Past bookings can't be modified",
