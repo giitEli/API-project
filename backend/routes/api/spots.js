@@ -76,10 +76,6 @@ router.get("/", validateQuery, async (req, res) => {
     attributes: ["spotId", "stars"],
   });
 
-  const spotImages = await SpotImage.findAll({
-    attributes: ["spotId", "url", "preview"],
-  });
-
   for (let i = 0; i < spots.length; i++) {
     spots[i].avgRating = getAvgRating(spots[i], reviews);
   }
