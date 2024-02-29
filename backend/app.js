@@ -74,7 +74,7 @@ app.use((err, _req, res, _next) => {
   console.log(err);
   res.json({
     // title: err.title || "Server Error",
-    message: "Uh Oh",
+    message: "Bad Request",
     errors: err.errors,
     // stack: isProduction ? null : err.stack,
   });
