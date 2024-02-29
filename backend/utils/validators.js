@@ -75,62 +75,37 @@ const validateSpot = [
 ];
 
 const validateQuery = [
+  oneOf([query("page").isEmpty(), query("page").isInt({ min: 1 })], {
+    message: "Page must be greater than or equal to 1",
+  }),
+  oneOf([query("size").isEmpty(), query("size").isInt({ min: 1 })], {
+    message: "Size must be greater than or equal to 1",
+  }),
   oneOf(
-    [
-      query("page").not().exists({ checkFalsy: false }),
-      query("page").isInt({ min: 1 }),
-    ],
-    { message: "Page must be greater than or equal to 1" }
-  ),
-  oneOf(
-    [
-      query("size").not().exists({ checkFalsy: false }),
-      query("size").isInt({ min: 1 }),
-    ],
-    { message: "Size must be greater than or equal to 1" }
-  ),
-  oneOf(
-    [
-      query("maxLat").not().exists({ checkFalsy: false }),
-      query("maxLat").isFloat({ min: -90, max: 90 }),
-    ],
+    [query("maxLat").isEmpty(), query("maxLat").isFloat({ min: -90, max: 90 })],
     { message: "Maximum latitude is invalid" }
   ),
   oneOf(
-    [
-      query("minLat").not().exists({ checkFalsy: false }),
-      query("minLat").isFloat({ min: -90, max: 90 }),
-    ],
+    [query("minLat").isEmpty(), query("minLat").isFloat({ min: -90, max: 90 })],
     { message: "Minimum latitude is invalid" }
   ),
   oneOf(
     [
-      query("maxLng").not().exists({ checkFalsy: false }),
+      query("maxLng").isEmpty(),
       query("maxLng").isFloat({ min: -180, max: 180 }),
     ],
     { message: "Maximum longitude is invalid" }
   ),
   oneOf(
-    [
-      query("minLng").not().exists({ checkFalsy: false }),
-      query("minLng").isInt({ min: -180, max: 180 }),
-    ],
+    [query("minLng").isEmpty(), query("minLng").isInt({ min: -180, max: 180 })],
     { message: "Minimum longitude is invalid" }
   ),
-  oneOf(
-    [
-      query("maxPrice").not().exists({ checkFalsy: false }),
-      query("maxPrice").isInt({ min: 0 }),
-    ],
-    { message: "Maximum price must be greater than or equal to 0" }
-  ),
-  oneOf(
-    [
-      query("minPrice").not().exists({ checkFalsy: false }),
-      query("minPrice").isInt({ min: 0 }),
-    ],
-    { message: "Minimum price must be greater than or equal to 0" }
-  ),
+  oneOf([query("maxPrice").isEmpty(), query("maxPrice").isInt({ min: 0 })], {
+    message: "Maximum price must be greater than or equal to 0",
+  }),
+  oneOf([query("minPrice").isEmpty(), query("minPrice").isInt({ min: 0 })], {
+    message: "Minimum price must be greater than or equal to 0",
+  }),
   handleOneOfValidationErrors,
 ];
 
